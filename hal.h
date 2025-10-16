@@ -46,12 +46,10 @@ static inline void gpio_set_af(uint16_t pin, uint8_t af_num) {
 	/* 00000000 00000111 
 	 * & 7 = 00000111
 	 * * 4 = 28 = 00011100
-	 *  15 << = 
 	 */
 
 	gpio->AFR[n >> 3] &= ~(15UL << ((n & 7) * 4));
 	gpio->AFR[n >> 3] |= ((uint32_t) af_num) << ((n & 7) * 4);
-
 }
 
 #endif
