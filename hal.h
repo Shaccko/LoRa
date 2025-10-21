@@ -7,12 +7,12 @@
 
 #include <rcc.h>
 
-
 #define BIT(x) (1UL << (x))
 #define GPIO(bank) ((struct gpio*) (0x40020000 + 0x400 * (bank)))
 #define PIN(bank, num) ((((bank) - 'A') << 8) | (num))
-#define PINNO(pin) (pin & 255)
+#define PIN_NUM(pin) (1UL << (pin))
 #define PINBANK(pin) (pin >> 8)
+#define BANK(port) ((port) - 'A')
 #define MASK 0x3U
 
 struct gpio {
@@ -22,34 +22,61 @@ struct gpio {
 
 enum { GPIO_MODE_INPUT, GPIO_MODE_OUTPUT, GPIO_MODE_AF, GPIO_MODE_ANALOG };
 
-static inline void gpio_set_mode(uint16_t pin, uint8_t MODE) {
-	struct gpio *gpio = GPIO(PINBANK(pin));
-	RCC->AHB1ENR |= BIT(PINBANK(pin)); /* Enable pin CLK */
-	int n = PINNO(pin);
-	
+static inline void gpio_set_mode(uint32_t pin, uint8_t MODE, uint8_t port) {
+	struct gpio *gpio = GPIO(BANK(port));
+	RCC->AHB1ENR |= BIT(BANK(port));
+	uint32_t pin_pos = 0x00;
+	uint32_t bit_pos;
 
-	/*Clear, and set pin*/
-	gpio->MODER &= ~(MASK << (n * 2));
-	gpio->MODER |= (MODE & MASK) << (n * 2);
+	while (pin >> pin_pos != 0x00) {
+		bit_pos = 0x01 << pin_pos;
+		uint32_t curr_pin = pin & bit_pos;
+
+		if (curr_pin) {
+			gpio->MODER &= ~(3U << (pin_pos * 2));
+			gpio->MODER |= (MODE & 3U) << (pin_pos * 2);
+		}
+		pin_pos++;
+	}	
 }
 
-static inline void gpio_write(uint16_t pin, bool val) {
-	struct gpio *gpio = GPIO(PINBANK(pin));
+static inline void gpio_write(uint32_t pin, bool val, uint8_t port) {
+	struct gpio *gpio = GPIO(BANK(port));
+	uint32_t pin_pos = 0x00;
+	uint32_t bit_pos;
 
-	gpio->BSRR = (1U << PINNO(pin)) << (val ? 0 : 16);
+	while (pin >> pin_pos != 0x00) {
+		bit_pos = 0x01 << pin_pos;
+		uint32_t curr_pin = pin & bit_pos;
+
+		if (curr_pin) {
+			gpio->BSRR = (1U << pin_pos) << (val ? 0 : 16);
+		}
+		pin_pos++;
+	}	
+
 }
 
-static inline void gpio_set_af(uint16_t pin, uint8_t af_num) {
-	struct gpio *gpio = GPIO(PINBANK(pin));
-	int n = PINNO(pin);
+static inline void gpio_set_af(uint32_t pin, uint8_t af_num, uint8_t port) {
+	struct gpio *gpio = GPIO(BANK(port));
+	uint32_t pin_pos = 0x00;
+	uint32_t bit_pos;
 
 	/* 00000000 00000111 
 	 * & 7 = 00000111
 	 * * 4 = 28 = 00011100
 	 */
 
-	gpio->AFR[n >> 3] &= ~(15UL << ((n & 7) * 4));
-	gpio->AFR[n >> 3] |= ((uint32_t) af_num) << ((n & 7) * 4);
+	while (pin >> pin_pos != 0x00) {
+		bit_pos = 0x01 << pin_pos;
+		uint32_t curr_pin = pin & bit_pos;
+
+		if (curr_pin) {
+			gpio->AFR[curr_pin >> 3] &= ~(15UL << ((pin_pos & 7) * 4));
+			gpio->AFR[curr_pin >> 3] |= ((uint32_t) af_num) << ((pin_pos & 7) * 4);
+		}
+		pin_pos++;
+	}
 }
 
 #endif

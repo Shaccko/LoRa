@@ -4,22 +4,23 @@
 
 #include <rcc.h>
 #include <hal.h>
-#include <uart.h>
+#include <spi.h>
+
+#define LED_PIN(pin) ((1U << (pin)))
+#define LED_PORT 'A'
 
 int main(void) {
-	struct uart* uart = UART2;
-	uint16_t led = PIN('A', 5);
-	uint8_t buf[] = "kekw\r\n";
+	/* Configure hal.h to hold pin bank and pins, 32bits can fit both */
+	uint32_t led = LED_PIN(5);
+	uint8_t port = LED_PORT;
 
-	uart_init(uart, 115200);
 	systick_init();
-	gpio_set_mode(led, GPIO_MODE_OUTPUT);
+	gpio_set_mode(led, GPIO_MODE_OUTPUT, port);
 	for (;;) {
-		gpio_write(led, true);
+		gpio_write(led, true, port);
 		delay(1000);
-		gpio_write(led, false);
+		gpio_write(led, false, port);
 		delay(1000);
-		uart_write_buf(uart, (char*) &buf, sizeof(buf));
 	}
 	return 0;
 }
