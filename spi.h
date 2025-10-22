@@ -10,15 +10,21 @@
 #define SPI4 ((struct spi*) (0x40013400))
 #define SPI5 ((struct spi*) (0x40015000))
 
-#define SPI_MASTER (BIT(2) | BIT(8) | BIT(1)) /* Master and enable bit */
-#define SPI_8BITMODE (BIT(11))
-#define SPI_CLKMODE2 ((BIT(1) | ~BIT(0)))
-#define SPI_MSBFIRST (~BIT(7))
-#define SPI_NSS_SOFT (BIT(9))
-#define SPI_BAUDRATE8 (3UL << 3)
+#define SPI_MASTER (BIT(2))
+#define SPI_ENABLE (BIT(6))
+#define SPI_8BITMODE (0 << 11)
+#define SPI_CLKMODE2 ((BIT(1) | (0)))
+#define SPI_CLKMODE0 (0)
+#define SPI_MSBFIRST (0)
+#define SPI_NSS_SOFT (BIT(9) | BIT(8))
+#define SPI_BAUDRATE2 (0)
 #define SPI_TIMODE (BIT(4))
 #define SPI_TXEIE (BIT(7))
 #define SPI_RXNEIE (BIT(6))
+#define SPI_BIDIMODE0 (0)
+#define SPI_SSOE (BIT(2))
+
+#define SPI_TXE_FLAG (BIT(1))
 
 #define SPI1_PORT 'A'
 #define SCK1_PIN (PIN_NUM(5))

@@ -21,6 +21,7 @@ struct gpio {
 };
 
 enum { GPIO_MODE_INPUT, GPIO_MODE_OUTPUT, GPIO_MODE_AF, GPIO_MODE_ANALOG };
+enum { LOW_SPEED, MED_SPEED, FAST_SPEED, HIGH_SPEED };
 
 static inline void gpio_set_mode(uint32_t pin, uint8_t MODE, uint8_t port) {
 	struct gpio *gpio = GPIO(BANK(port));
@@ -28,7 +29,7 @@ static inline void gpio_set_mode(uint32_t pin, uint8_t MODE, uint8_t port) {
 	uint32_t pin_pos = 0x00;
 	uint32_t bit_pos;
 
-	while (pin >> pin_pos != 0x00) {
+	while ((pin >> pin_pos) != 0x00) {
 		bit_pos = 0x01 << pin_pos;
 		uint32_t curr_pin = pin & bit_pos;
 
@@ -40,12 +41,29 @@ static inline void gpio_set_mode(uint32_t pin, uint8_t MODE, uint8_t port) {
 	}	
 }
 
+static inline void gpio_set_speed(uint32_t pin, uint8_t speed, uint8_t port) {
+	struct gpio *gpio = GPIO(BANK(port));
+	uint32_t pin_pos = 0x00;
+	uint32_t bit_pos;
+
+	while ((pin >> pin_pos) != 0x00) {
+		bit_pos = 0x01 << pin_pos;
+		uint32_t curr_pin = pin & bit_pos;
+
+		if (curr_pin) {
+			gpio->OSPEEDR &= ~(3U << (pin_pos * 2));
+			gpio->OSPEEDR |= (speed & 3U) << (pin_pos * 2);
+		}
+		pin_pos++;
+	}
+}
+
 static inline void gpio_write(uint32_t pin, bool val, uint8_t port) {
 	struct gpio *gpio = GPIO(BANK(port));
 	uint32_t pin_pos = 0x00;
 	uint32_t bit_pos;
 
-	while (pin >> pin_pos != 0x00) {
+	while ((pin >> pin_pos) != 0x00) {
 		bit_pos = 0x01 << pin_pos;
 		uint32_t curr_pin = pin & bit_pos;
 
@@ -67,13 +85,13 @@ static inline void gpio_set_af(uint32_t pin, uint8_t af_num, uint8_t port) {
 	 * * 4 = 28 = 00011100
 	 */
 
-	while (pin >> pin_pos != 0x00) {
+	while ((pin >> pin_pos) != 0x00) {
 		bit_pos = 0x01 << pin_pos;
 		uint32_t curr_pin = pin & bit_pos;
 
 		if (curr_pin) {
-			gpio->AFR[curr_pin >> 3] &= ~(15UL << ((pin_pos & 7) * 4));
-			gpio->AFR[curr_pin >> 3] |= ((uint32_t) af_num) << ((pin_pos & 7) * 4);
+			gpio->AFR[pin_pos >> 3] &= ~(15UL << ((pin_pos & 7) * 4));
+			gpio->AFR[pin_pos >> 3] |= ((uint32_t) af_num) << ((pin_pos & 7) * 4);
 		}
 		pin_pos++;
 	}
