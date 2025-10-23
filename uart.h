@@ -8,25 +8,24 @@
 #define UART2 ((struct uart *) 0x40004400)
 #define UART6 ((struct uart *) 0x40011400)
 
+#define UART1_TX (PIN_NUM(2))
+#define UART1_RX (PIN_NUM(3))
+#define UART1_PORT ('A')
+
 struct uart {
 	volatile uint32_t SR, DR, BRR, CR1, CR2, CR3, GTPR;
 };
 
-static inline void uart_init(struct uart* uart, unsigned long baud) {
+static inline void uart_init(struct uart* uart, unsigned long baud, uint32_t uart_pins, uint8_t port) {
+
 	uint8_t af = 7; /* uart AF num */
-	uint16_t tx = 0, rx = 0;
+	uint32_t pins = uart_pins;
 
 	if (uart == UART1) RCC->APB2ENR |= BIT(4); /* Hard coded UART1 */
 	if (uart == UART2) RCC->APB1ENR |= BIT(17);
 
-	if (uart == UART1) tx = PIN('A', 9), rx = PIN('A', 10);
-	if (uart == UART2) tx = PIN('A', 2), rx = PIN('A', 3);
-
-
-	gpio_set_mode(tx, GPIO_MODE_AF);
-	gpio_set_af(tx, af);
-	gpio_set_mode(rx, GPIO_MODE_AF);
-	gpio_set_af(rx, af);
+	gpio_set_mode(pins, GPIO_MODE_AF, port);
+	gpio_set_af(pins, af, port);
 
 	uart->CR1 = 0;
 	uart->BRR = CLK_FREQ / baud;

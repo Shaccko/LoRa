@@ -4,7 +4,7 @@ CFLAGS  ?=  -W -Wall -Wextra -Wundef -Wshadow -Wdouble-promotion \
             -mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16 $(EXTRA_CFLAGS)
 LDFLAGS ?= -Tlink.ld -nostartfiles -nostdlib --specs nano.specs -lc -lgcc -Wl,--gc-sections -Wl,-Map=$@.map
 SOURCES = main.c rcc.c startup.c spi.c
-HEADER = rcc.h hal.h spi.h
+HEADER = rcc.h hal.h spi.h uart.h
 
 build: firmware.elf
 

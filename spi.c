@@ -27,6 +27,13 @@ void spi_init(struct spi* spi, uint32_t spi_pins, uint8_t spi_port) {
 	spi->CR1 |= SPI_ENABLE;
 }
 
+uint32_t spi_receive_byte(struct spi* spi) {
+	while(!(spi->SR & SPI_RXE_FLAG));
+	return spi->DR;
+}
+
+
+
 void spi_write_buf(struct spi* spi, uint8_t* buf) {
 	while(!(spi->SR & SPI_TXE_FLAG)); 
 	spi->DR = (uint32_t)*buf;

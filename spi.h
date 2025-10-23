@@ -25,6 +25,7 @@
 #define SPI_SSOE (BIT(2))
 
 #define SPI_TXE_FLAG (BIT(1))
+#define SPI_RXE_FLAG (BIT(0))
 
 #define SPI1_PORT 'A'
 #define SCK1_PIN (PIN_NUM(5))
@@ -40,6 +41,7 @@ struct spi {
 
 void spi_init(struct spi* spi, uint32_t spi_pins, uint8_t spi_port);
 void spi_write_buf(struct spi* spi, uint8_t* buf);
+uint32_t spi_receive_byte(struct spi* spi);
 void spi_transmit_data(struct spi* spi, uint8_t* buf, size_t len);
 
 #endif
