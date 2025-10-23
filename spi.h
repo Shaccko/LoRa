@@ -43,5 +43,6 @@ void spi_init(struct spi* spi, uint32_t spi_pins, uint8_t spi_port);
 void spi_write_buf(struct spi* spi, uint8_t* buf);
 uint32_t spi_receive_byte(struct spi* spi);
 void spi_transmit_data(struct spi* spi, uint8_t* buf, size_t len);
+void spi_transmit_receive(struct spi* spi, uint8_t* tx_buf, uint8_t* rx_buf, size_t tx_len);
 
 #endif

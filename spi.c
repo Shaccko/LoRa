@@ -43,3 +43,17 @@ void spi_transmit_data(struct spi* spi, uint8_t* buf, size_t len) {
 	while (len--) spi_write_buf(spi, buf++);
 }
 
+void spi_transmit_receive(struct spi* spi, uint8_t* tx_buf, uint8_t* rx_buf, size_t tx_len) {
+
+
+	/*while(!(spi->SR & SPI_TXE_FLAG));
+	spi->DR = (uint32_t)*tx_buf;
+	while(!(spi->SR & SPI_RXE_FLAG));
+	return spi->DR;*/
+	while(tx_len--) {
+		size_t i = 0;
+		spi->DR = (uint32_t) *tx_buf++;
+		rx_buf[i++] = (uint8_t) spi_receive_byte(spi);
+	}
+}
+

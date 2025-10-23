@@ -13,8 +13,10 @@
 
 int main(void) {
 	/* Configure hal.h to hold pin bank and pins, 32bits can fit both */
-	uint8_t buf[] = "ahugestrin";
-	char* msg = "Uart working\r\n";
+	const char* tx_buf = "ahugestrin";
+	size_t tx_len = strlen(tx_buf);
+	char rx_buf[32];
+
 	struct spi* spi1 = SPI1;
 	uint32_t spi1_pins = SCK1_PIN | MOSI1_PIN | MISO1_PIN | NSS1_PIN;
 	uint8_t spi1_port = SPI1_PORT;
@@ -28,8 +30,8 @@ int main(void) {
 	systick_init();
 	spi_init(spi1, spi1_pins, spi1_port);
 	for (;;) {
-		spi_transmit_data(spi1, buf, 10);
-		uart_write_buf(uart1, msg, strlen(msg));
+		spi_transmit_receive(spi1, (uint8_t*)tx_buf, (uint8_t*) rx_buf, tx_len);
+		uart_write_buf(uart1, rx_buf, strlen(rx_buf));
 		delay(5);
 	}
 	return 0;
