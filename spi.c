@@ -2,6 +2,9 @@
 #include <spi.h>
 #include <hal.h>
 
+
+struct spi* spi1 = SPI1;
+
 void spi_init(struct spi* spi, uint32_t spi_pins, uint8_t spi_port) {
 	/* Define SCL baud rate, SPI_CR1
 	 * Select CPOL and CPHA bits for relationship type
@@ -55,5 +58,11 @@ void spi_transmit_receive(struct spi* spi, uint8_t* tx_buf, uint8_t* rx_buf, siz
 		spi->DR = (uint32_t) *tx_buf++;
 		rx_buf[i++] = (uint8_t) spi_receive_byte(spi);
 	}
+}
+
+void spi1_init(void) {
+	uint32_t spi1_pins = SCK1_PIN | MOSI1_PIN | MISO1_PIN | NSS1_PIN;
+	uint8_t spi1_port = SPI1_PORT;
+	spi_init(spi1, spi1_pins, spi1_port);
 }
 

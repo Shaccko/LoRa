@@ -7,13 +7,17 @@
 
 #include <rcc.h>
 
+#define _IO volatile
 #define BIT(x) (1UL << (x))
 #define GPIO(bank) ((struct gpio*) (0x40020000 + 0x400 * (bank)))
 #define PIN(bank, num) ((((bank) - 'A') << 8) | (num))
-#define PIN_NUM(pin) (1UL << (pin))
+#define PIN_NUM(pin) (1U << (pin))
 #define PINBANK(pin) (pin >> 8)
 #define BANK(port) ((port) - 'A')
 #define MASK 0x3U
+
+#define GPIO_PIN_SET 1
+#define GPIO_PIN_RESET 0
 
 struct gpio {
 	volatile uint32_t MODER, OTYPER, OSPEEDR, PUPDR, IDR, ODR, BSRR, LCKR,
@@ -58,7 +62,7 @@ static inline void gpio_set_speed(uint32_t pin, uint8_t speed, uint8_t port) {
 	}
 }
 
-static inline void gpio_write(uint32_t pin, bool val, uint8_t port) {
+static inline void gpio_write_pin(uint8_t port, uint32_t pin, uint8_t val) {
 	struct gpio *gpio = GPIO(BANK(port));
 	uint32_t pin_pos = 0x00;
 	uint32_t bit_pos;
@@ -73,6 +77,12 @@ static inline void gpio_write(uint32_t pin, bool val, uint8_t port) {
 		pin_pos++;
 	}	
 
+}
+
+static inline uint32_t gpio_read_pin(uint8_t port, uint32_t pin) {
+	struct gpio *gpio = GPIO(BANK(port));
+	
+	return gpio->IDR & pin ? GPIO_PIN_SET : GPIO_PIN_RESET;
 }
 
 static inline void gpio_set_af(uint32_t pin, uint8_t af_num, uint8_t port) {
