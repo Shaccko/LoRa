@@ -18,6 +18,9 @@
 /* DIOx Mapping Registers */
 #define RegDioMapping 0x40
 
+/* LoRa version Register */
+#define RegVersion 0x42
+
 /* LoRa pins definitions */
 #define LORA_PORT 'B'
 #define CS_PIN (PIN_NUM(0))
@@ -46,8 +49,9 @@ struct lora {
 
 
 
-void new_lora(struct lora* lora);
+uint8_t new_lora(struct lora* lora);
 void lora_write_reg(struct lora* lora, uint8_t addr, uint8_t val);
-void lora_read_reg(struct lora* lora, uint8_t addr, uint8_t val, uint8_t* out);
+void lora_read_reg(struct lora* lora, uint8_t addr, uint8_t* out);
+void lora_set_mode(struct lora* lora, uint8_t mode);
 
 #endif

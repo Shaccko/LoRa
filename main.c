@@ -14,23 +14,21 @@
 
 int main(void) {
 	/* Configure hal.h to hold pin bank and pins, 32bits can fit both */
-	const char* tx_buf = "ahugestrin";
-	char* msg = "Loop restarting\n\r";
-	size_t tx_len = strlen(tx_buf);
-	size_t msg_len = strlen(msg);
-	char rx_buf[32];
+
+	char buf[32];
 	struct lora lora;
+	uint8_t lora_version = 0;
 	
 
 	spi1_init();
 	uart2_init();
-	new_lora(&lora);
 
+	lora_version = new_lora(&lora);
 
 	systick_init();
 	for (;;) {
-		lora_set_mode(&lora, 
-		uart_write_buf(uart2, msg, msg_len);
+		if (lora_version == 0x12) uart_write_buf(uart2, "y", 1);
+		uart_write_buf(uart2, "done\r\n", 6);
 		delay(5);
 	}
 	return 0;
