@@ -8,7 +8,6 @@
 #define RegOpMode 0x01
 
 /* Packet Config Registers */
-#define RegPreambleMsb 0x25
 #define RegSyncConfig 0x27
 #define RegPacketConfig1 0x30
 
@@ -36,7 +35,7 @@
 /* SF, CRC, and Timeout MSB */
 #define RegModemConfig2 0x1E
 /* LSB Timeout */
-#define RegSymbTimeoutLsb, 0x1F
+#define RegSymbTimeoutLsb 0x1F
 
 /* Preamble Register */
 #define RegPreambleMsb 0x20
@@ -85,5 +84,9 @@ uint8_t new_lora(struct lora* lora);
 void lora_write_reg(struct lora* lora, uint8_t addr, uint8_t val);
 void lora_read_reg(struct lora* lora, uint8_t addr, uint8_t* out);
 void lora_set_mode(struct lora* lora, uint8_t mode);
-
+void lora_set_modemconfig2(struct lora* lora, uint8_t sf);
+void lora_set_modemconfig1(struct lora* lora, uint8_t bw, uint8_t code_rate);
+void lora_set_lnahigh(struct lora* lora);
+void lora_set_ocp(struct lora* lora);
+void lora_set_freq(struct lora* lora, uint32_t freq);
 #endif

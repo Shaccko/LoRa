@@ -9,7 +9,7 @@ uint8_t new_lora(struct lora* lora) {
 	/* Default pins */
 	lora->lora_port = LORA_PORT;
 	lora->cs_pin = CS_PIN;
-lora->rst_pin = RST_PIN;
+	lora->rst_pin = RST_PIN;
 	lora->dio0_pin = IRQ_PIN;
 	lora->lspi = spi1;
 
@@ -57,7 +57,7 @@ lora->rst_pin = RST_PIN;
 	lora_set_modemconfig1(lora, lora->bw, lora->code_rate);
 
 	/* CF, CRC, Timeout */
-	lora_set_modemconfig(lora, lora->sf);
+	lora_set_modemconfig1(lora, lora->sf, lora->code_rate);
 
 	/* DIO mapping, using DIO0 */
 	lora_write_reg(lora, RegDioMapping1, 0x3F); /* Setting DIO0, rest to none */
@@ -71,47 +71,45 @@ lora->rst_pin = RST_PIN;
 
 	lora_read_reg(lora, RegVersion, &lora_version);
 
-	return lora_version == 0x12 ? : LORA_SUCCESS, LORA_FAIL;
+	return lora_version == 0x12 ? LORA_SUCCESS : LORA_FAIL;
 }
 
-void lora_set_modemconfig2(struct* lora, uint8_t sf) {
-	uint8_t reg_val = 0xFF & (sf << 4) /* Set TxCont, RxPayload on, RXTimeOut */
+void lora_set_modemconfig2(struct lora* lora, uint8_t sf) {
+	uint8_t reg_val = 0xFFU & (sf << 4U); /* Set TxCont, RxPayload on, RXTimeOut */
 	lora_write_reg(lora, RegModemConfig2, reg_val);
-	lora_write_reg(lora, RegSymbTimeoutLsb, 0xFF); /* Set LSB TimeOut */
+	lora_write_reg(lora, RegSymbTimeoutLsb, 0xFFU); /* Set LSB TimeOut */
 }
 
-void lora_set_modemconfig1(struct* lora, uint8_t bw, uint8_t code_rate) {
-	uint8_t reg_val = (bw << 4) | (code_rate << 1) | (0x00); /* 4/5 code rate, 125KHz BW, Explicit mode */
+void lora_set_modemconfig1(struct lora* lora, uint8_t bw, uint8_t code_rate) { 
+	/* 4/5 code rate, 125KHz BW, Explicit mode */
+	uint8_t reg_val = (uint8_t) (((unsigned)bw << 4U) | ((unsigned)code_rate << 1U) | (0x00U)); /* Thank you C */
 	lora_write_reg(lora, RegModemConfig1, reg_val);
 }
 
-void lora_set_lnahigh(struct* lora) {
-	uint8_t reg_val = 0x20 | 0x03 /* 150% LNA, G1 = max gain */
+void lora_set_lnahigh(struct lora* lora) {
+	uint8_t reg_val = 0x20 | 0x03; /* 150% LNA, G1 = max gain */
 	lora_write_reg(lora, RegLNA, reg_val);
 }
 
-void lora_set_ocp(stuct lora* lora) {
+void lora_set_ocp(struct lora* lora) {
 	uint8_t reg_val = 0x20 | 0x0B; /* Sets OCP, default set to lmax = 100ma */
 	lora_write_reg(lora, RegOCP, reg_val);
 }
 
 void lora_set_freq(struct lora* lora, uint32_t freq) {
 	uint8_t reg_data;
-	uint32_t new_freq = ((freq * (2 << 19)) >> 5); /* freq * 2^19 / 2^5 */
+	uint32_t new_freq = ((freq * (2U << 19U)) >> 5U); /* freq * 2^19 / 2^5 */
 
-	reg_data = new_freq >> 16;
+	reg_data = (uint8_t) (new_freq >> 16U);
 	lora_write_reg(lora, RegFrMsb, reg_data);
 
-	reg_data = new_freq >> 8;
+	reg_data = (uint8_t) (new_freq >> 8U);
 	lora_write_reg(lora, RegFrMid, reg_data);
 
-	reg_data = new_freq >> 0;
+	reg_data = (uint8_t) (new_freq >> 0);
 	lora_write_reg(lora, RegFrLsb, reg_data);
 }
 
-void lora_set_gain(struct lora* lora, uint8_t gain) {
-	lora_write_reg(lora, 
-	
 
 void lora_write_reg(struct lora* lora, uint8_t addr, uint8_t val) {
 	uint8_t reg[2];
