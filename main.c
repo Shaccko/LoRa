@@ -22,12 +22,11 @@ int main(void) {
 
 	spi1_init();
 	uart2_init();
-
 	lora_version = new_lora(&lora);
 
 	systick_init();
 	for (;;) {
-		if (lora_version == 0x12) uart_write_buf(uart2, "y", 1);
+		if (lora_version) uart_write_buf(uart2, "y", 1);
 		uart_write_buf(uart2, "done\r\n", 6);
 		delay(5);
 	}
