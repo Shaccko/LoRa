@@ -9,7 +9,7 @@ uint8_t new_lora(struct lora* lora) {
 	/* Default pins */
 	lora->lora_port = LORA_PORT;
 	lora->cs_pin = CS_PIN;
-	lora->rst_pin = RST_PIN;
+lora->rst_pin = RST_PIN;
 	lora->dio0_pin = IRQ_PIN;
 	lora->lspi = spi1;
 
@@ -24,23 +24,94 @@ uint8_t new_lora(struct lora* lora) {
 	lora->freq = FREQ_433;
 	lora->sf = SF_7;
 	lora->bw = BW_125KHz;
-	lora->crcrate = CR_4_5;
+	lora->code_rate = CR_4_5;
 	lora->preamb = PREAMB_8;
 	lora->db_pwr = POWER_20dB;
-	lora->ocp = OCP_100;
 	lora->curr_mode = STDBY;
 
 	
 	/* Initialize LoRa */
 	lora_set_mode(lora, SLEEP);
 	lora_write_reg(lora, RegOpMode, 0x80); /* Set RegOP to LoRa mode */
+	
+	/* Set frequency, output power gain, OCP, LNA gain, 
+	 * SF, CRC, timeout MSB, timeout LSB, bandwidth, coding rate, explicit mode,
+	 * preaamble, DI0 mapping then goto standby mode for further operations by user
+	 * end with a version check for validity. 
+	 */
+	
+	/* Essentially these registers below are increasing our range. */
+	/* FRF = (F_rf * 2^19)/32MHz */
+	lora_set_freq(lora, lora->freq);
+
+	/* Power Gain */
+	lora_write_reg(lora, PwrGain, lora->db_pwr);
+
+	/* OCP */
+	lora_set_ocp(lora);
+
+	/* Set LNA Gain */
+	lora_set_lnahigh(lora); 
+
+	/* Set BW, CR */
+	lora_set_modemconfig1(lora, lora->bw, lora->code_rate);
+
+	/* CF, CRC, Timeout */
+	lora_set_modemconfig(lora, lora->sf);
+
+	/* DIO mapping, using DIO0 */
+	lora_write_reg(lora, RegDioMapping1, 0x3F); /* Setting DIO0, rest to none */
+
+	/* Set Preamble */
+	lora_write_reg(lora, RegPreambleMsb, (lora->preamb >> 8));
+	lora_write_reg(lora, RegPreambleLsb, (lora->preamb >> 0));
+
+	/* Registers set, STDBY for future operations, check LoRa with version read */
 	lora_set_mode(lora, STDBY);
 
 	lora_read_reg(lora, RegVersion, &lora_version);
 
-	return lora_version;
+	return lora_version == 0x12 ? : LORA_SUCCESS, LORA_FAIL;
 }
 
+void lora_set_modemconfig2(struct* lora, uint8_t sf) {
+	uint8_t reg_val = 0xFF & (sf << 4) /* Set TxCont, RxPayload on, RXTimeOut */
+	lora_write_reg(lora, RegModemConfig2, reg_val);
+	lora_write_reg(lora, RegSymbTimeoutLsb, 0xFF); /* Set LSB TimeOut */
+}
+
+void lora_set_modemconfig1(struct* lora, uint8_t bw, uint8_t code_rate) {
+	uint8_t reg_val = (bw << 4) | (code_rate << 1) | (0x00); /* 4/5 code rate, 125KHz BW, Explicit mode */
+	lora_write_reg(lora, RegModemConfig1, reg_val);
+}
+
+void lora_set_lnahigh(struct* lora) {
+	uint8_t reg_val = 0x20 | 0x03 /* 150% LNA, G1 = max gain */
+	lora_write_reg(lora, RegLNA, reg_val);
+}
+
+void lora_set_ocp(stuct lora* lora) {
+	uint8_t reg_val = 0x20 | 0x0B; /* Sets OCP, default set to lmax = 100ma */
+	lora_write_reg(lora, RegOCP, reg_val);
+}
+
+void lora_set_freq(struct lora* lora, uint32_t freq) {
+	uint8_t reg_data;
+	uint32_t new_freq = ((freq * (2 << 19)) >> 5); /* freq * 2^19 / 2^5 */
+
+	reg_data = new_freq >> 16;
+	lora_write_reg(lora, RegFrMsb, reg_data);
+
+	reg_data = new_freq >> 8;
+	lora_write_reg(lora, RegFrMid, reg_data);
+
+	reg_data = new_freq >> 0;
+	lora_write_reg(lora, RegFrLsb, reg_data);
+}
+
+void lora_set_gain(struct lora* lora, uint8_t gain) {
+	lora_write_reg(lora, 
+	
 
 void lora_write_reg(struct lora* lora, uint8_t addr, uint8_t val) {
 	uint8_t reg[2];

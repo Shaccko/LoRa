@@ -15,8 +15,35 @@
 /* IRQ Registers */
 #define RegIrqFlags 0x3e /* uint8_t f[2] */
 
+/* Frequency Registers */
+#define RegFrMsb 0x06
+#define RegFrMid 0x07
+#define RegFrLsb 0x08 /* 24 bits, divided among 3 registers */
+
+/* Gain Power Register */
+#define PwrGain 0x09
+
+/* Power Register */
+#define RegGainConfig 0x09
+
+/* OCP Register */
+#define RegOCP 0x0B
+/* LNA Register */
+#define RegLNA 0x0C
+
+/* BW, CR, and header mode config */
+#define RegModemConfig1 0x1D
+/* SF, CRC, and Timeout MSB */
+#define RegModemConfig2 0x1E
+/* LSB Timeout */
+#define RegSymbTimeoutLsb, 0x1F
+
+/* Preamble Register */
+#define RegPreambleMsb 0x20
+#define RegPreambleLsb 0x21
+
 /* DIOx Mapping Registers */
-#define RegDioMapping 0x40
+#define RegDioMapping1 0x40
 
 /* LoRa version Register */
 #define RegVersion 0x42
@@ -36,6 +63,10 @@
 #define OCP_100 0x100
 #define PREAMB_8 0x8
 
+/* T/F Macros */
+#define LORA_SUCCESS 1
+#define LORA_FAIL 0
+
 enum { SLEEP, STDBY, FSTX, TX, FSRX, RXCONT, RXSINGLE, CAD };
 
 struct lora {
@@ -43,9 +74,10 @@ struct lora {
 	uint16_t cs_pin, rst_pin, dio0_pin;
 	struct spi* lspi;
 
-	uint16_t freq, ocp;
-	uint8_t sf, bw, crcrate, preamb, db_pwr, curr_mode;
+	uint32_t freq, ocp;
+	uint8_t sf, bw, code_rate, preamb, db_pwr, curr_mode;
 };
+
 
 
 
