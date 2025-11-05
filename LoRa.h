@@ -7,12 +7,23 @@
 #define RegFifo 0x00
 #define RegOpMode 0x01
 
+/* FiFo Addr Registers */
+#define RegFifoAddrPtr 0x0D
+#define RegFifoTxBaseAddr 0x0E
+#define RegFifoRxBaseAddr 0x0F
+#define RegFifoRxCurrentAddr 0x10
+#define FifoRxBytesNb 0x13
+
 /* Packet Config Registers */
 #define RegSyncConfig 0x27
 #define RegPacketConfig1 0x30
 
-/* IRQ Registers */
-#define RegIrqFlags 0x3e /* uint8_t f[2] */
+/* LoRa IRQ Registers */
+#define RegIrqFlagsMask 0x11
+#define RegIrqFlags 0x12
+/* FSK IRQ Registers */
+#define FSKIrqFlags2 0x3F
+
 
 /* Frequency Registers */
 #define RegFrMsb 0x06
@@ -21,9 +32,6 @@
 
 /* Gain Power Register */
 #define PwrGain 0x09
-
-/* Power Register */
-#define RegGainConfig 0x09
 
 /* OCP Register */
 #define RegOCP 0x0B
@@ -63,8 +71,8 @@
 #define PREAMB_8 0x8
 
 /* T/F Macros */
-#define LORA_SUCCESS 1
-#define LORA_FAIL 0
+#define OK 1
+#define FAIL 0
 
 enum { SLEEP, STDBY, FSTX, TX, FSRX, RXCONT, RXSINGLE, CAD };
 
@@ -91,4 +99,5 @@ void lora_set_ocp(struct lora* lora);
 void lora_set_freq(struct lora* lora, uint32_t freq);
 void lora_transmit(struct lora* lora, uint8_t* msg);
 void lora_receive(struct lora* lora, uint8_t* buf);
+void lora_burstwrite(struct lora* lora, uint8_t* payload, size_t payload_len);
 #endif
