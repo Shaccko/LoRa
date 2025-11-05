@@ -5,6 +5,9 @@
 #include <string.h>
 
 
+static inline uint8_t fifo_empty(struct lora* lora);
+
+
 uint8_t new_lora(struct lora* lora) {
 	uint8_t lora_version;
 	/* Default pins */
@@ -77,19 +80,19 @@ uint8_t new_lora(struct lora* lora) {
 }
 
 uint8_t lora_transmit(struct lora* lora, uint8_t* msg, size_t msg_len) {
-	if (!fifo_empty) return FAIL;
+	if (!fifo_empty(lora)) return FAIL;
 
 	uint8_t reg;
 	/* Set FiFo ptr to TxAddr ptr */
 	lora_read_reg(lora, RegFifoTxBaseAddr, &reg);
-	lora_write_reg(lora, RegFifoAddrPtr, tx_reg);
+	lora_write_reg(lora, RegFifoAddrPtr, reg);
 
 	lora_burstwrite(lora, msg, msg_len); 
 	lora_set_mode(lora, TX); /* Write to FiFo and Transmit */
 
 	/* Check and clear Tx flag */
-	lora_read_reg(lora, RegIrqFlags, reg);
-	while (reg & 0x08U == 0)
+	lora_read_reg(lora, RegIrqFlags, &reg);
+	while ((reg & 0x08U) == 0)
 	lora_write_reg(lora, RegIrqFlags, 0x08); /* Write 1 to clear flag */
 	lora_set_mode(lora, STDBY);
 
@@ -97,24 +100,24 @@ uint8_t lora_transmit(struct lora* lora, uint8_t* msg, size_t msg_len) {
 }
 
 uint8_t lora_receive(struct lora* lora, uint8_t* buf) {
-	if (!fifo_empty) return FAIL;
+	if (!fifo_empty(lora)) return FAIL;
 	lora_set_mode(lora, STDBY);
 	
 	uint8_t reg;
 	size_t num_bytes, i;
-	lora_read_reg(lora, RegFifoRxCurrentAddr, reg);
+	lora_read_reg(lora, RegFifoRxCurrentAddr, &reg);
 	lora_write_reg(lora, RegFifoAddrPtr, reg);
 	
-	lora_read_reg(lora, FifoRxBytesNb, &num_bytes);
+	lora_read_reg(lora, FifoRxBytesNb, (uint8_t*)&num_bytes);
 
 	/* Push bytes onto buffer */
-	lora_read_reg(lora, RegIrqFlags, reg);
-	while (reg & 0x40 == 0);
-	for (i = 0; i < num_bytes, i++) {
+	lora_read_reg(lora, RegIrqFlags, &reg);
+	while ((reg & 0x40) == 0);
+	for (i = 0; i < num_bytes; i++) {
 		lora_read_reg(lora, RegFifo, &buf[i]);
 	}
 	
-	lora_write-reg(lora, RegIrqFlags, 0x40);
+	lora_write_reg(lora, RegIrqFlags, 0x40);
 	
 	return OK;
 }
@@ -125,12 +128,12 @@ static inline uint8_t fifo_empty(struct lora* lora) {
 	uint8_t reg;
 
 	/* Initial check if FiFo is empty */
-	lora_read_reg(lora, RegOpMode, reg);
-	reg |= 0x40;
+	lora_read_reg(lora, RegOpMode, &reg);
+	reg |= 0x40U;
 	lora_write_reg(lora, RegOpMode, reg);
-	lora_read_reg(lora, FSKIrqFlags2, reg); /* Access FiFoEmpty */
+	lora_read_reg(lora, FSKIrqFlags2, &reg); /* Access FiFoEmpty */
 	if (!reg) return FAIL;
-	reg &= ~(0x40);
+	reg &= (uint8_t)(~(0x40U));
 	lora_write_reg(lora, RegOpMode, reg); /* Reset back to LoRa registers */
 
 	return OK;
@@ -191,13 +194,13 @@ void lora_burstwrite(struct lora* lora, uint8_t* payload, size_t payload_len) {
 	if (payload_len > 32) return;
 
 	uint8_t reg[32];
-	static const size_t reg_len = payload_len + 1;
+	size_t reg_len = payload_len + 1;
 	reg[0] = 0x80 | RegFifo;
 	memcpy(&reg[1], payload, payload_len);
 
-	gpio_write_pin(LORA_PORT, CS_PIN, GPIO_PIN_RESET);
+	gpio_write_pin(lora->lora_port, lora->cs_pin, GPIO_PIN_RESET);
 	spi_transmit_receive(lora->lspi, reg, 0, reg_len);
-	gpio_write_pin(LORA->PORT, CS_PIN, GPIO_PIN_SET);
+	gpio_write_pin(lora->lora_port, lora->cs_pin, GPIO_PIN_SET);
 }
 
 
@@ -209,9 +212,9 @@ void lora_read_reg(struct lora* lora, uint8_t addr, uint8_t* out) {
 	reg[0] = addr & 0x7F; 
 	reg[1] = 0;
 
-	gpio_write_pin(LORA_PORT, CS_PIN, GPIO_PIN_RESET);
+	gpio_write_pin(lora->lora_port, lora->cs_pin, GPIO_PIN_RESET);
 	spi_transmit_receive(lora->lspi, reg, rx_buf, reg_len);
-	gpio_write_pin(LORA_PORT, CS_PIN, GPIO_PIN_SET);
+	gpio_write_pin(lora->lora_port, lora->cs_pin, GPIO_PIN_SET);
 	
 	*out = rx_buf[1];
 }

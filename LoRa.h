@@ -31,7 +31,7 @@
 #define RegFrLsb 0x08 /* 24 bits, divided among 3 registers */
 
 /* Gain Power Register */
-#define PwrGain 0x09
+#define RegGainConfig 0x09
 
 /* OCP Register */
 #define RegOCP 0x0B
@@ -97,7 +97,7 @@ void lora_set_modemconfig1(struct lora* lora, uint8_t bw, uint8_t code_rate);
 void lora_set_lnahigh(struct lora* lora);
 void lora_set_ocp(struct lora* lora);
 void lora_set_freq(struct lora* lora, uint32_t freq);
-void lora_transmit(struct lora* lora, uint8_t* msg);
-void lora_receive(struct lora* lora, uint8_t* buf);
+uint8_t lora_transmit(struct lora* lora, uint8_t* msg, size_t msg_len);
+uint8_t lora_receive(struct lora* lora, uint8_t* buf);
 void lora_burstwrite(struct lora* lora, uint8_t* payload, size_t payload_len);
 #endif
