@@ -70,8 +70,17 @@ uint8_t new_lora(struct lora* lora) {
 	lora_set_mode(lora, STDBY);
 
 	lora_read_reg(lora, RegVersion, &lora_version);
-
+	
+	/* We expect it to return 0x12, according to register datasheet */
 	return lora_version == 0x12 ? LORA_SUCCESS : LORA_FAIL;
+}
+
+void lora_transmit(struct lora* lora, uint8_t* msg) {
+
+}
+
+void lora_receive(struct lora* lora, uint8_t* buf) {
+
 }
 
 void lora_set_modemconfig2(struct lora* lora, uint8_t sf) {

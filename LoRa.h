@@ -89,4 +89,6 @@ void lora_set_modemconfig1(struct lora* lora, uint8_t bw, uint8_t code_rate);
 void lora_set_lnahigh(struct lora* lora);
 void lora_set_ocp(struct lora* lora);
 void lora_set_freq(struct lora* lora, uint32_t freq);
+void lora_transmit(struct lora* lora, uint8_t* msg);
+void lora_receive(struct lora* lora, uint8_t* buf);
 #endif
