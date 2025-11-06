@@ -2,6 +2,7 @@
 
 #include <hal.h>
 #include <spi.h>
+#include <uart.h>
 #include <string.h>
 
 
@@ -80,21 +81,27 @@ uint8_t new_lora(struct lora* lora) {
 }
 
 uint8_t lora_transmit(struct lora* lora, uint8_t* msg, size_t msg_len) {
-	if (!fifo_empty(lora)) return FAIL;
+	if (!fifo_empty(lora) || msg_len > 32) return FAIL;
 
 	uint8_t reg;
 	/* Set FiFo ptr to TxAddr ptr */
 	lora_read_reg(lora, RegFifoTxBaseAddr, &reg);
 	lora_write_reg(lora, RegFifoAddrPtr, reg);
+	lora_write_reg(lora, FifoPayloadLength, (uint8_t) msg_len);
 
 	lora_burstwrite(lora, msg, msg_len); 
 	lora_set_mode(lora, TX); /* Write to FiFo and Transmit */
 
 	/* Check and clear Tx flag */
 	lora_read_reg(lora, RegIrqFlags, &reg);
-	while ((reg & 0x08U) == 0)
+	while ((reg & 0x08U) == 0){
+		lora_read_reg(lora, RegIrqFlags, &reg);
+		delay(10); /* Incredibly important delay, crosstalk potential which can cause other pins to toggle (user LED) */
+	}
 	lora_write_reg(lora, RegIrqFlags, 0x08); /* Write 1 to clear flag */
 	lora_set_mode(lora, STDBY);
+
+
 
 	return OK;
 }
@@ -105,6 +112,10 @@ uint8_t lora_receive(struct lora* lora, uint8_t* buf) {
 	
 	uint8_t reg;
 	size_t num_bytes, i;
+
+	/* Wait for Rx flag, set FiFo ptr to RxBase */
+	lora_read_reg(lora, RegIrqFlags, &reg);
+	while ((reg & 0x40U) == 0) lora_read_reg(lora, RegIrqFlags, &reg);
 	lora_read_reg(lora, RegFifoRxCurrentAddr, &reg);
 	lora_write_reg(lora, RegFifoAddrPtr, reg);
 	
@@ -112,7 +123,7 @@ uint8_t lora_receive(struct lora* lora, uint8_t* buf) {
 
 	/* Push bytes onto buffer */
 	lora_read_reg(lora, RegIrqFlags, &reg);
-	while ((reg & 0x40) == 0);
+	while ((reg & 0x40) == 0) lora_read_reg(lora, RegIrqFlags, &reg);
 	for (i = 0; i < num_bytes; i++) {
 		lora_read_reg(lora, RegFifo, &buf[i]);
 	}
@@ -199,7 +210,7 @@ void lora_burstwrite(struct lora* lora, uint8_t* payload, size_t payload_len) {
 	memcpy(&reg[1], payload, payload_len);
 
 	gpio_write_pin(lora->lora_port, lora->cs_pin, GPIO_PIN_RESET);
-	spi_transmit_receive(lora->lspi, reg, 0, reg_len);
+	spi_transmit_receive(lora->lspi, reg, (uint8_t*)0, reg_len);
 	gpio_write_pin(lora->lora_port, lora->cs_pin, GPIO_PIN_SET);
 }
 

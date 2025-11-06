@@ -13,6 +13,7 @@
 #define RegFifoRxBaseAddr 0x0F
 #define RegFifoRxCurrentAddr 0x10
 #define FifoRxBytesNb 0x13
+#define FifoPayloadLength 0x22
 
 /* Packet Config Registers */
 #define RegSyncConfig 0x27
@@ -85,9 +86,6 @@ struct lora {
 	uint8_t sf, bw, code_rate, preamb, db_pwr, curr_mode;
 };
 
-
-
-
 uint8_t new_lora(struct lora* lora);
 void lora_write_reg(struct lora* lora, uint8_t addr, uint8_t val);
 void lora_read_reg(struct lora* lora, uint8_t addr, uint8_t* out);
@@ -100,4 +98,5 @@ void lora_set_freq(struct lora* lora, uint32_t freq);
 uint8_t lora_transmit(struct lora* lora, uint8_t* msg, size_t msg_len);
 uint8_t lora_receive(struct lora* lora, uint8_t* buf);
 void lora_burstwrite(struct lora* lora, uint8_t* payload, size_t payload_len);
+
 #endif

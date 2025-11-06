@@ -18,17 +18,22 @@ int main(void) {
 	char buf[32];
 	struct lora lora;
 	uint8_t lora_version = 0;
+	uint8_t lora_msg[20] = "hello";
 	
 
-	spi1_init();
 	uart2_init();
-	lora_version = new_lora(&lora);
+	spi1_init();
 
 	systick_init();
+	lora_version = new_lora(&lora);
+	uint8_t counter = 0;
 	for (;;) {
-		if (lora_version) uart_write_buf(uart2, "y", 1);
-		uart_write_buf(uart2, "done\r\n", 6);
-		delay(5);
+		if (lora_version && counter == 0) {
+			uart_write_buf(uart2, "lora pass\r\n", 11);
+			counter = 1;
+		}
+		lora_transmit(&lora, (uint8_t*)"Hello", 5);
+		delay(500);
 	}
 	return 0;
 }

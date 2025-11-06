@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <spi.h>
 #include <hal.h>
+#include <uart.h>
 
 
 struct spi* spi1 = SPI1;
@@ -48,6 +49,8 @@ void spi_transmit_data(struct spi* spi, uint8_t* buf, size_t len) {
 
 void spi_transmit_receive(struct spi* spi, uint8_t* tx_buf, uint8_t* rx_buf, size_t tx_len) {
 	size_t i = 0;
+	uint8_t dummy[32];
+	if (rx_buf == NULL || rx_buf == 0) rx_buf = dummy;
 	while(tx_len--) {
 		spi_write_buf(spi, tx_buf++);
 		rx_buf[i++] = (uint8_t) spi_receive_byte(spi);
