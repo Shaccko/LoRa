@@ -32,7 +32,7 @@ int main(void) {
 			uart_write_buf(uart2, "lora pass\r\n", 11);
 			counter = 1;
 		}
-		lora_transmit(&lora, lora_msg, 3);
+		lora_transmit(&lora, (uint8_t*)"bitchass", 8);
 		delay(50);
 	}
 	return 0;

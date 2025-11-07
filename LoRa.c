@@ -155,14 +155,14 @@ static inline uint8_t fifo_empty(struct lora* lora) {
 
 
 void lora_set_modemconfig2(struct lora* lora, uint8_t sf) {
-	uint8_t reg_val = 0xFFU & (sf << 4U); /* Set TxCont, RxPayload on, RXTimeOut */
+	uint8_t reg_val = (sf << 4U); /* Set TxCont, RxPayload on, RXTimeOut */
 	lora_write_reg(lora, RegModemConfig2, reg_val);
 	lora_write_reg(lora, RegSymbTimeoutLsb, 0xFFU); /* Set LSB TimeOut */
 }
 
 void lora_set_modemconfig1(struct lora* lora, uint8_t bw, uint8_t code_rate) { 
 	/* 4/5 code rate, 125KHz BW, implicit (no CRC) mode */
-	uint8_t reg_val = (uint8_t) (((unsigned)bw << 4U) | ((unsigned)code_rate << 1U) | (0x01U)); /* Thank you C */
+	uint8_t reg_val = (uint8_t) (((unsigned)bw << 4U) | ((unsigned)code_rate << 1U) | (0x00U)); /* Thank you C */
 	lora_write_reg(lora, RegModemConfig1, reg_val);
 }
 
@@ -204,7 +204,7 @@ void lora_write_reg(struct lora* lora, uint8_t addr, uint8_t val) {
 }
 
 void lora_burstwrite(struct lora* lora, uint8_t* payload, size_t payload_len) {
-	if (payload_len > 32) return;
+	if (payload_len > 33) return;
 
 	uint8_t reg[32];
 	size_t reg_len = payload_len + 1;
