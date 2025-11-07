@@ -18,7 +18,7 @@ int main(void) {
 	char buf[32];
 	struct lora lora;
 	uint8_t lora_version = 0;
-	uint8_t lora_msg[20] = "hello";
+	uint8_t lora_msg[20] = "kys";
 	
 
 	uart2_init();
@@ -32,7 +32,7 @@ int main(void) {
 			uart_write_buf(uart2, "lora pass\r\n", 11);
 			counter = 1;
 		}
-		lora_transmit(&lora, (uint8_t*)"Hello", 5);
+		lora_transmit(&lora, lora_msg, 3);
 		delay(50);
 	}
 	return 0;

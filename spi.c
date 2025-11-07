@@ -44,7 +44,10 @@ void spi_write_buf(struct spi* spi, uint8_t* buf) {
 }
 
 void spi_transmit_data(struct spi* spi, uint8_t* buf, size_t len) {
-	while (len--) spi_write_buf(spi, buf++);
+	while (len--){
+		uart_write_buf(uart2, (char*)buf, 1);
+		spi_write_buf(spi, buf++);
+	}
 }
 
 void spi_transmit_receive(struct spi* spi, uint8_t* tx_buf, uint8_t* rx_buf, size_t tx_len) {
@@ -52,7 +55,7 @@ void spi_transmit_receive(struct spi* spi, uint8_t* tx_buf, uint8_t* rx_buf, siz
 	uint8_t dummy[32];
 	if (rx_buf == NULL || rx_buf == 0) rx_buf = dummy;
 	while(tx_len--) {
-		spi_write_buf(spi, tx_buf++);
+		spi_write_buf(spi, &tx_buf[i]);
 		rx_buf[i++] = (uint8_t) spi_receive_byte(spi);
 	}
 }

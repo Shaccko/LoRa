@@ -83,10 +83,14 @@ uint8_t new_lora(struct lora* lora) {
 uint8_t lora_transmit(struct lora* lora, uint8_t* msg, size_t msg_len) {
 
 	uint8_t reg;
+	lora_write_reg(lora, RegIrqFlags, 0xFFU); /* Pre-clear all flags */
+
+	lora_set_mode(lora, STDBY);
+
 	/* Set FiFo ptr to TxAddr ptr */
 	lora_read_reg(lora, RegFifoTxBaseAddr, &reg);
 	lora_write_reg(lora, RegFifoAddrPtr, reg);
-	lora_write_reg(lora, FifoPayloadLength, (uint8_t) msg_len);
+	lora_write_reg(lora, FifoPayloadLength, (uint8_t)msg_len);
 
 	lora_burstwrite(lora, msg, msg_len); 
 	lora_set_mode(lora, TX); /* Write to FiFo and Transmit */
@@ -95,9 +99,9 @@ uint8_t lora_transmit(struct lora* lora, uint8_t* msg, size_t msg_len) {
 	lora_read_reg(lora, RegIrqFlags, &reg);
 	while ((reg & 0x08U) == 0){
 		lora_read_reg(lora, RegIrqFlags, &reg);
-		delay(10); /* Incredibly important delay, crosstalk potential which can cause other pins to toggle (user LED) */
+		delay(20); /* Incredibly important delay, crosstalk potential which can cause other pins to toggle (user LED) */
 	}
-	lora_write_reg(lora, RegIrqFlags, 0x08); /* Write 1 to clear flag */
+	lora_write_reg(lora, RegIrqFlags, 0xFFU); /* Write 1 to clear flag */
 	lora_set_mode(lora, STDBY);
 
 
@@ -208,6 +212,7 @@ void lora_burstwrite(struct lora* lora, uint8_t* payload, size_t payload_len) {
 	memcpy(&reg[1], payload, payload_len);
 
 	gpio_write_pin(lora->lora_port, lora->cs_pin, GPIO_PIN_RESET);
+	//spi_transmit_data(lora->lspi, reg, reg_len);
 	spi_transmit_receive(lora->lspi, reg, (uint8_t*)0, reg_len);
 	gpio_write_pin(lora->lora_port, lora->cs_pin, GPIO_PIN_SET);
 }
