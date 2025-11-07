@@ -45,6 +45,8 @@
 #define RegModemConfig2 0x1E
 /* LSB Timeout */
 #define RegSymbTimeoutLsb 0x1F
+/* LDRO config */
+#define RegModemConfig3 0x26
 
 /* Preamble Register */
 #define RegPreambleMsb 0x20
@@ -64,12 +66,12 @@
 
 /* LoRaWAN modem definitions */
 #define FREQ_433 433
-#define SF_7 0x7
-#define BW_125KHz 0x7
-#define CR_4_5 0x1
+#define SF_7 0x07
+#define BW_125KHz 0x07
+#define CR_4_5 0x01
 #define POWER_20dB 0xFF
 #define OCP_100 0x100
-#define PREAMB_8 0x8
+#define PREAMB_8 0x08
 
 /* T/F Macros */
 #define OK 1

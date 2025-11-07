@@ -33,7 +33,7 @@ int main(void) {
 			counter = 1;
 		}
 		lora_transmit(&lora, (uint8_t*)"Hello", 5);
-		delay(500);
+		delay(50);
 	}
 	return 0;
 }

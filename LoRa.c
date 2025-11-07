@@ -62,7 +62,7 @@ uint8_t new_lora(struct lora* lora) {
 	lora_set_modemconfig1(lora, lora->bw, lora->code_rate);
 
 	/* CF, CRC, Timeout */
-	lora_set_modemconfig1(lora, lora->sf, lora->code_rate);
+	lora_set_modemconfig2(lora, lora->sf);
 
 	/* DIO mapping, using DIO0 */
 	lora_write_reg(lora, RegDioMapping1, 0x3F); /* Setting DIO0, rest to none */
@@ -81,7 +81,6 @@ uint8_t new_lora(struct lora* lora) {
 }
 
 uint8_t lora_transmit(struct lora* lora, uint8_t* msg, size_t msg_len) {
-	if (!fifo_empty(lora) || msg_len > 32) return FAIL;
 
 	uint8_t reg;
 	/* Set FiFo ptr to TxAddr ptr */
@@ -151,7 +150,6 @@ static inline uint8_t fifo_empty(struct lora* lora) {
 }
 
 
-
 void lora_set_modemconfig2(struct lora* lora, uint8_t sf) {
 	uint8_t reg_val = 0xFFU & (sf << 4U); /* Set TxCont, RxPayload on, RXTimeOut */
 	lora_write_reg(lora, RegModemConfig2, reg_val);
@@ -176,7 +174,7 @@ void lora_set_ocp(struct lora* lora) {
 
 void lora_set_freq(struct lora* lora, uint32_t freq) {
 	uint8_t reg_data;
-	uint32_t new_freq = ((freq * (2U << 19U)) >> 5U); /* freq * 2^19 / 2^5 */
+	uint32_t new_freq = ((freq * (1U << 19U)) >> 5U); /* freq * 2^19 / 2^5 */
 
 	reg_data = (uint8_t) (new_freq >> 16U);
 	lora_write_reg(lora, RegFrMsb, reg_data);
