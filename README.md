@@ -45,8 +45,12 @@ To make use of this, make sure LoRa is configured with the default settings:
 These pin configurations are hard-coded in spi.h and LoRa.h. 
 use "git clone" to clone this project on your directory.
 
-What works and what doesn't:
-Both transmission and receiving is functional for LoRa.
+# Features:
+Basic transmission and receiving is functional. 
+
+# Future TO-DOs
+A sleep mode should be configured for optimized current usage.
+Precise tuning for how much distance user needs would optimize current usage more.
 
 
 
