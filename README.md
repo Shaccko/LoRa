@@ -52,6 +52,10 @@ Basic transmission and receiving is functional.
 A sleep mode should be configured for optimized current usage.
 Precise tuning for how much distance user needs would optimize current usage more.
 
+Overall, I'd say this project has made me appreciate low-level programming more, and
+I'm no longer scared looking at bits and can make a above-average effort at understanding
+bit/low-level code. 
+
 
 
 
