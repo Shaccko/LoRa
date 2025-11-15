@@ -1,5 +1,7 @@
 # LoRa
 Communicating with LoRa using SPI through STM32F411RE.
+This project is built on top of the Bare Metal Programming Guide for STM32 ARM MCUs
+(https://github.com/cpq/bare-metal-programming-guide)
 
 by Ghanim
 ghanimj@hotmail.com

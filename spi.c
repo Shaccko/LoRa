@@ -15,7 +15,8 @@ void spi_init(struct spi* spi, uint32_t spi_pins, uint8_t spi_port) {
 	uint8_t spi_af = 5;
 	/* SPI1 config only for now */
 
-	RCC->APB2ENR |= BIT(12); /* SPI Clock */
+	if (spi == SPI1) RCC->APB2ENR |= BIT(12); /* SPI1 Clock */
+
 	gpio_set_mode(spi_pins, GPIO_MODE_AF, spi_port);
 	gpio_set_af(spi_pins, spi_af, spi_port);
 	gpio_set_speed(spi_pins, HIGH_SPEED, spi_port);
