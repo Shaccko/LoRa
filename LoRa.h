@@ -22,6 +22,7 @@
 /* LoRa IRQ Registers */
 #define RegIrqFlagsMask 0x11
 #define RegIrqFlags 0x12
+
 /* FSK IRQ Registers */
 #define FSKIrqFlags2 0x3F
 

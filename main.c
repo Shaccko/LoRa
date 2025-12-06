@@ -15,7 +15,6 @@
 int main(void) {
 	/* Configure hal.h to hold pin bank and pins, 32bits can fit both */
 
-	char buf[32];
 	struct lora lora;
 	uint8_t lora_version = 0;
 
@@ -23,11 +22,17 @@ int main(void) {
 	spi1_init();
 
 	systick_init();
-	lora_version = new_lora(&lora);
-	if (lora_version) uart_write_buf(uart2, "lora pass\r\n", 11);
 	for (;;) {
-		lora_transmit(&lora, (uint8_t*)"Working", 7);
-		delay(50);
+		lora_version = new_lora(&lora);
+		if (lora_version) uart_write_buf(uart2, "lora pass\r\n", 11);
+		uart_write_buf(uart2, "pass\r\n", 6);
+		printf("SOMETHING\r\n");
+
+		delay(500);
 	}
 	return 0;
+}
+
+void lora_rx_irq(void) {
+	(void)0;
 }

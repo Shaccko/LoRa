@@ -1,13 +1,13 @@
 #include <LoRa.h>
-
 #include <hal.h>
 #include <spi.h>
 #include <uart.h>
+#include <exti.h>
+
 #include <string.h>
 
 
 static inline uint8_t fifo_empty(struct lora* lora);
-
 
 uint8_t new_lora(struct lora* lora) {
 	uint8_t lora_version;
@@ -18,7 +18,11 @@ uint8_t new_lora(struct lora* lora) {
 	lora->dio0_pin = IRQ_PIN;
 	lora->lspi = spi1;
 
-	gpio_set_mode(CS_PIN|RST_PIN, GPIO_MODE_OUTPUT, LORA_PORT); /* Set CS pin */
+	gpio_set_mode(CS_PIN|RST_PIN, GPIO_MODE_OUTPUT, LORA_PORT);
+	gpio_set_mode(IRQ_PIN, GPIO_MODE_INPUT, LORA_PORT);
+	gpio_set_pupdr(IRQ_PIN, PULL_DOWN, LORA_PORT);
+	enable_line_interrupt(IRQ_PIN, LORA_PORT, RISING); 
+	/* Set CS pin */ 
 	gpio_write_pin(LORA_PORT, CS_PIN|RST_PIN, GPIO_PIN_SET); 
 
 	/* Default values for loraWAN modem, don't care
@@ -65,11 +69,14 @@ uint8_t new_lora(struct lora* lora) {
 	lora_set_modemconfig2(lora, lora->sf);
 
 	/* DIO mapping, using DIO0 */
-	lora_write_reg(lora, RegDioMapping1, 0x3F); /* Setting DIO0, rest to none */
+	uint8_t read, data;
+	lora_read_reg(lora, RegDioMapping1, &read);
+	data = read | 0x3FU; 
+	lora_write_reg(lora, RegDioMapping1, data); /* Setting DIO0, rest to none */
 
 	/* Set Preamble */
-	lora_write_reg(lora, RegPreambleMsb, (lora->preamb >> 8));
-	lora_write_reg(lora, RegPreambleLsb, (lora->preamb >> 0));
+	lora_write_reg(lora, RegPreambleMsb, (uint8_t)(lora->preamb >> 8U));
+	lora_write_reg(lora, RegPreambleLsb, (uint8_t)(lora->preamb >> 0U));
 
 	/* Registers set, STDBY for future operations, check LoRa with version read */
 	lora_set_mode(lora, STDBY);
@@ -83,6 +90,8 @@ uint8_t new_lora(struct lora* lora) {
 uint8_t lora_transmit(struct lora* lora, uint8_t* msg, size_t msg_len) {
 
 	uint8_t reg;
+	uint8_t lora_mode = lora->curr_mode;
+
 	lora_write_reg(lora, RegIrqFlags, 0xFFU); /* Pre-clear all flags */
 
 	lora_set_mode(lora, STDBY);
@@ -96,47 +105,40 @@ uint8_t lora_transmit(struct lora* lora, uint8_t* msg, size_t msg_len) {
 	lora_set_mode(lora, TX); /* Write to FiFo and Transmit */
 
 	/* Check and clear Tx flag */
-	lora_read_reg(lora, RegIrqFlags, &reg);
-	while ((reg & 0x08U) == 0){
+	do {
 		lora_read_reg(lora, RegIrqFlags, &reg);
-		delay(20); /* Incredibly important delay, crosstalk potential which can cause other pins to toggle (user LED) */
-	}
+		delay(10); /* Crosstalk delay */
+	} while ((reg  & 0x08U) == 0);
+
 	lora_write_reg(lora, RegIrqFlags, 0xFFU); /* Write 1 to clear flag */
-	lora_set_mode(lora, STDBY);
-
-
+	lora_set_mode(lora, lora_mode);
 
 	return OK;
 }
 
 uint8_t lora_receive(struct lora* lora, uint8_t* buf) {
-	if (!fifo_empty(lora)) return FAIL;
-	lora_set_mode(lora, STDBY);
-	
-	uint8_t reg;
-	size_t num_bytes, i;
+	uint8_t addr;
+	uint8_t num_bytes;
 
-	/* Wait for Rx flag, set FiFo ptr to RxBase */
-	lora_read_reg(lora, RegIrqFlags, &reg);
-	while ((reg & 0x40U) == 0) lora_read_reg(lora, RegIrqFlags, &reg);
-	lora_read_reg(lora, RegFifoRxCurrentAddr, &reg);
-	lora_write_reg(lora, RegFifoAddrPtr, reg);
-	
-	lora_read_reg(lora, FifoRxBytesNb, (uint8_t*)&num_bytes);
+	/* Clear rx flag */
+	lora_write_reg(lora, RegIrqFlags, 0x40U);
 
-	/* Push bytes onto buffer */
-	lora_read_reg(lora, RegIrqFlags, &reg);
-	while ((reg & 0x40) == 0) lora_read_reg(lora, RegIrqFlags, &reg);
-	for (i = 0; i < num_bytes; i++) {
+	/* Set FiFo */
+	lora_read_reg(lora, RegFifoRxCurrentAddr, &addr);
+	lora_write_reg(lora, RegFifoAddrPtr, addr);
+	lora_read_reg(lora, FifoRxBytesNb, &num_bytes);
+
+	/* Read from FiFo, each consecutive read moves the FiFo
+	 * address ptr up.
+	 */
+	for (uint8_t i = 0; i < num_bytes; i++) {
 		lora_read_reg(lora, RegFifo, &buf[i]);
 	}
-	
-	lora_write_reg(lora, RegIrqFlags, 0x40);
-	
+
+	lora_write_reg(lora, RegIrqFlags, 0x40U);
+
 	return OK;
 }
-
-
 
 static inline uint8_t fifo_empty(struct lora* lora) {
 	uint8_t reg;
@@ -155,7 +157,12 @@ static inline uint8_t fifo_empty(struct lora* lora) {
 
 
 void lora_set_modemconfig2(struct lora* lora, uint8_t sf) {
-	uint8_t reg_val = (sf << 4U); /* Set TxCont, RxPayload on, RXTimeOut */
+	uint8_t reg_val;
+	uint8_t read;
+
+	lora_read_reg(lora, RegModemConfig2, &read);
+	//reg_val = (read | ((uint8_t) (sf << 4U)) | 0x05U);
+	reg_val = (read | ((uint8_t) (sf << 4U)));
 	lora_write_reg(lora, RegModemConfig2, reg_val);
 	lora_write_reg(lora, RegSymbTimeoutLsb, 0xFFU); /* Set LSB TimeOut */
 }
@@ -212,7 +219,6 @@ void lora_burstwrite(struct lora* lora, uint8_t* payload, size_t payload_len) {
 	memcpy(&reg[1], payload, payload_len);
 
 	gpio_write_pin(lora->lora_port, lora->cs_pin, GPIO_PIN_RESET);
-	//spi_transmit_data(lora->lspi, reg, reg_len);
 	spi_transmit_receive(lora->lspi, reg, (uint8_t*)0, reg_len);
 	gpio_write_pin(lora->lora_port, lora->cs_pin, GPIO_PIN_SET);
 }
@@ -243,8 +249,3 @@ void lora_set_mode(struct lora* lora, uint8_t mode) {
 	lora->curr_mode = mode;
 }
 
-	
-
-/* mode &= (7U);
- * mode |= (MODE)
- */
