@@ -4,7 +4,6 @@ This project is built on top of the Bare Metal Programming Guide for STM32 ARM M
 (https://github.com/cpq/bare-metal-programming-guide)
 
 by Ghanim
-ghanimj@hotmail.com
 
 Design purpose of this was to learn bare-metal embedded programming
 on the ARM chip through our STM32F411RE MCU board. A basic custom SPI
